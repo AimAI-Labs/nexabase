@@ -5,29 +5,55 @@ spring:
   application:
     name: nexabase-graph
   profiles:
-    active: dev
+    # 同时激活 dev 和 local 两个 profile：
+    # - dev：对应 Nacos 远程配置 dataId = nexabase-graph-dev.yml
+    # - local：加载本地 application-local.yml，注入 Nacos / Neo4j 地址及账号等敏感信息
+    #   （local 在 dev 之后激活，优先级更高，可覆盖远程配置）
+    #   该文件已加入 .gitignore，不会提交到仓库；缺失时回退到下方占位符默认值，不阻断启动。
+    active: dev,local
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8080
-      username: nacos
-      password: "密码自己设置" # 请替换为实际的Nacos密码
+      # Nacos 服务器地址，可通过环境变量或 application-local.yml 覆盖
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
+      # 服务注册与发现配置
       discovery:
-        namespace: nexabase-dev
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
         group: DEFAULT_GROUP
+      # 配置中心配置
       config:
-        namespace: nexabase-dev
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
         file-extension: yml
         group: DEFAULT_GROUP
-  config:
-    import:
-      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/nexabase_graph?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
   neo4j:
-    uri: bolt://127.0.0.1:7687
+    # Neo4j 连接信息，可通过环境变量或 application-local.yml 覆盖
+    uri: ${NEO4J_URI:neo4j://localhost:7687}
     authentication:
-      username: neo4j
-      password: nexabase_neo4j_pwd
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:password}
+  # spring.config.import 已移至 application-local.yml。
+  # 原因：application.yml 中的 import 会在 local profile 加载前执行，
+  #   此时 server-addr 仍为默认的 127.0.0.1:8848，导致 "Server check fail" 错误。
+  #   将 import 放入 application-local.yml 可确保在 server-addr / namespace
+  #   等连接信息加载后再执行 Nacos 配置导入。
+  # 非本地环境请通过环境变量 NACOS_SERVER_ADDR 等设置连接信息，
+  # 并在对应 profile 文件中添加 spring.config.import。
+
+
+logging:
+  pattern:
+    dateformat: "yyMMdd | HH:mm:ss.SSS"
+  level:
+    org.springframework.data.neo4j.cypher: DEBUG
+
+# Knife4j API 文档
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
