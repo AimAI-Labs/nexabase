@@ -57,3 +57,4 @@ skills-lock.json
 assets/
 docs/
 scripts/
+.worktrees/
