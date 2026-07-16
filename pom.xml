@@ -35,7 +35,8 @@
         <druid.version>1.2.26</druid.version>
         <jjwt.version>0.13.0</jjwt.version>
         <langchain4j.version>1.9.1</langchain4j.version>
-        <knife4j.version>4.4.0</knife4j.version>
+        <knife4j.version>4.5.0</knife4j.version>
+        <springdoc-openapi.version>2.8.9</springdoc-openapi.version>
         <hutool.version>5.8.24</hutool.version>
         <lombok.version>1.18.38</lombok.version>
     </properties>
@@ -162,6 +163,13 @@
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI：覆盖 Knife4j 4.5.0 默认的 2.3.0，适配 Spring Boot 3.5 / Spring Framework 6.2 -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc-openapi.version}</version>
             </dependency>
 
             <!-- Hutool -->

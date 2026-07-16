@@ -50,6 +50,7 @@ springdoc:
   swagger-ui:
     enabled: true
 knife4j:
-  enable: true
+  # Spring Boot 3.5 + knife4j 4.5.0 下 enable=true 会触发异常，knife4j 默认已开启，置为 false 即可
+  enable: false
   setting:
     language: zh_cn
