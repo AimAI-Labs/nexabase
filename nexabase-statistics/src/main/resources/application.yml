@@ -1,0 +1,28 @@
+server:
+  port: 8005
+
+spring:
+  application:
+    name: nexabase-statistics
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8080
+      username: nacos
+      password: "密码自己设置" # 请替换为实际的Nacos密码
+      discovery:
+        namespace: nexabase-dev
+        group: DEFAULT_GROUP
+      config:
+        namespace: nexabase-dev
+        file-extension: yml
+        group: DEFAULT_GROUP
+  config:
+    import:
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/nexabase_statistics?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver

@@ -1,0 +1,40 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: nexabase-gateway
+  profiles:
+    # 同时激活 dev 和 local 两个 profile：
+    # - dev：对应 Nacos 远程配置 dataId = nexabase-gateway-dev.yml
+    # - local：加载本地 application-local.yml，注入 Nacos 地址/账号等敏感信息
+    #   （local 在 dev 之后激活，优先级更高，可覆盖远程配置）
+    #   该文件已加入 .gitignore，不会提交到仓库；缺失时回退到下方占位符默认值，不阻断启动。
+    active: dev,local
+  cloud:
+    nacos:
+      # Nacos 服务器地址，可通过环境变量 NACOS_SERVER_ADDR 或 application-local.yml 覆盖
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
+      # 服务注册与发现配置
+      discovery:
+        # 命名空间 ID，对应 Nacos 控制台中的命名空间
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
+        # 分组名称
+        group: DEFAULT_GROUP
+      # 配置中心配置
+      config:
+        # 命名空间 ID，需与 discovery 保持一致
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
+        # 配置文件扩展名，对应 Nacos 中 dataId 的后缀
+        file-extension: yml
+        # 分组名称
+        group: DEFAULT_GROUP
+  # spring.config.import 已移至 application-local.yml。
+  # 原因：application.yml 中的 import 会在 local profile 加载前执行，
+  #   此时 server-addr 仍为默认的 127.0.0.1:8848，导致 "Server check fail" 错误。
+  #   将 import 放入 application-local.yml 可确保在 server-addr / namespace
+  #   等连接信息加载后再执行 Nacos 配置导入。
+  # 非本地环境请通过环境变量 NACOS_SERVER_ADDR 等设置连接信息，
+  # 并在对应 profile 文件中添加 spring.config.import。

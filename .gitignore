@@ -4,6 +4,19 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### 敏感/本地配置（含数据库密码、Nacos 凭据等，请勿提交）###
+application-local.yml
+application-local.yaml
+application-local.properties
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+
+### 日志 ###
+*.log
+logs/
+
+
 ### STS ###
 .apt_generated
 .classpath
@@ -31,3 +44,16 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 操作系统生成文件 ###
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# skills
+.agents/
+skills-lock.json
+
+assets/
+docs/
+scripts/
