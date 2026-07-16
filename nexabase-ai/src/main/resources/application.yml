@@ -5,33 +5,16 @@ spring:
   application:
     name: nexabase-ai
   profiles:
-    active: dev
+    active: dev,local
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8080
-      username: nacos
-      password: "密码自己设置" # 请替换为实际的Nacos密码
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
       discovery:
-        namespace: nexabase-dev
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
         group: DEFAULT_GROUP
       config:
-        namespace: nexabase-dev
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
         file-extension: yml
         group: DEFAULT_GROUP
-  config:
-    import:
-      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/nexabase_ai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: admin
-    password: nexabase_rmq_pwd
-langchain4j:
-  qdrant:
-    host: 127.0.0.1
-    port: 6334

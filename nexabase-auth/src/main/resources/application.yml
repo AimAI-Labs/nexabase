@@ -5,29 +5,20 @@ spring:
   application:
     name: nexabase-auth
   profiles:
-    active: dev
+    # dev：对应 Nacos 远程配置 dataId = nexabase-auth-dev.yml
+    # local：加载本地 application-local.yml，注入 Nacos 地址/账号等敏感信息
+    active: dev,local
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8080
-      username: nacos
-      password: "密码自己设置" # 请替换为实际的Nacos密码
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      username: ${NACOS_USERNAME:nacos}
+      password: ${NACOS_PASSWORD:nacos}
       discovery:
-        namespace: nexabase-dev
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
         group: DEFAULT_GROUP
       config:
-        namespace: nexabase-dev
+        namespace: ${NACOS_NAMESPACE:nexabase-dev}
         file-extension: yml
         group: DEFAULT_GROUP
-  config:
-    import:
-      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/nexabase_auth?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  data:
-    redis:
-      host: 127.0.0.1
-      port: 6379
-      password: nexabase_redis_pwd
+  # spring.config.import 移至 application-local.yml
+  # 确保在 server-addr/namespace 加载后再执行 Nacos 配置导入
