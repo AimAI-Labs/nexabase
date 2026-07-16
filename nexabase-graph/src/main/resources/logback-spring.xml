@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 应用名称，用于日志文件命名 -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="nexabase-graph"/>
+
+    <!-- 引入 Nexabase 共享 Logback 配置：控制台 + 滚动文件 + 错误文件 -->
+    <include resource="nexabase-logback-base.xml"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
+    <!-- Neo4j Cypher 调试日志 -->
+    <logger name="org.springframework.data.neo4j.cypher" level="DEBUG"/>
+</configuration>

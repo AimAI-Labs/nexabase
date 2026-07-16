@@ -41,11 +41,7 @@ spring:
   # 并在对应 profile 文件中添加 spring.config.import。
 
 
-logging:
-  pattern:
-    dateformat: "yyMMdd | HH:mm:ss.SSS"
-  level:
-    org.springframework.data.neo4j.cypher: DEBUG
+# 日志配置由 logback-spring.xml 统一管理（含 TraceID 输出模式、文件滚动策略）
 
 # Knife4j API 文档
 springdoc:

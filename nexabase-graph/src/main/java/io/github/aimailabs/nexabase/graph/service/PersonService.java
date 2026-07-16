@@ -1,11 +1,14 @@
 package io.github.aimailabs.nexabase.graph.service;
 
+import io.github.aimailabs.nexabase.foundation.common.ResultCode;
+import io.github.aimailabs.nexabase.foundation.exception.BusinessException;
 import io.github.aimailabs.nexabase.graph.dto.CreateRelationshipRequest;
 import io.github.aimailabs.nexabase.graph.dto.PersonCreateRequest;
 import io.github.aimailabs.nexabase.graph.entity.KnowsRelationship;
 import io.github.aimailabs.nexabase.graph.entity.PersonNode;
 import io.github.aimailabs.nexabase.graph.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +24,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PersonService {
 
     private final PersonRepository repository;
@@ -29,6 +33,7 @@ public class PersonService {
      * 创建人物节点
      */
     public PersonNode createPerson(PersonCreateRequest request) {
+        log.info("创建人物节点: name={}, age={}", request.getName(), request.getAge());
         PersonNode person = new PersonNode(request.getName(), request.getAge());
         return repository.save(person);
     }
@@ -45,7 +50,7 @@ public class PersonService {
      */
     public PersonNode findByName(String name) {
         return repository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("人物不存在: " + name));
+                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND, "人物不存在: " + name));
     }
 
     /**
@@ -58,17 +63,18 @@ public class PersonService {
      * 4. 保存源人物 → SDN 自动同步关系到 Neo4j
      */
     public void createRelationship(CreateRelationshipRequest request) {
+        log.info("建立 KNOWS 关系: {} → {}, since={}", request.getFromName(), request.getToName(), request.getSince());
         PersonNode from = repository.findByName(request.getFromName())
-                .orElseThrow(() -> new IllegalArgumentException("源人物不存在: " + request.getFromName()));
+                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND, "源人物不存在: " + request.getFromName()));
 
         PersonNode to = repository.findByName(request.getToName())
-                .orElseThrow(() -> new IllegalArgumentException("目标人物不存在: " + request.getToName()));
+                .orElseThrow(() -> new BusinessException(ResultCode.RESOURCE_NOT_FOUND, "目标人物不存在: " + request.getToName()));
 
         // 检查是否已存在关系，避免重复
         boolean alreadyKnows = from.getKnows().stream()
                 .anyMatch(rel -> rel.getTarget().getName().equals(request.getToName()));
         if (alreadyKnows) {
-            throw new IllegalStateException(request.getFromName() + " 已经认识 " + request.getToName());
+            throw new BusinessException(ResultCode.CONFLICT, request.getFromName() + " 已经认识 " + request.getToName());
         }
 
         from.getKnows().add(new KnowsRelationship(request.getSince(), to));
@@ -103,6 +109,7 @@ public class PersonService {
      */
     public void deleteByName(String name) {
         PersonNode person = findByName(name);
+        log.info("删除人物节点: name={}", name);
         repository.delete(person);
     }
 }

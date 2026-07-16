@@ -12,6 +12,13 @@
     <artifactId>nexabase-graph</artifactId>
 
     <dependencies>
+        <!-- Nexabase 公共基础模块：统一响应、异常处理、链路追踪、日志规范 -->
+        <dependency>
+            <groupId>io.github.aimai-labs.nexabase</groupId>
+            <artifactId>nexabase-foundation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Boot Web (REST API) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

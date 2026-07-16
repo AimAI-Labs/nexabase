@@ -1,0 +1,2 @@
+io.github.aimailabs.nexabase.foundation.config.ServletWebAutoConfiguration
+io.github.aimailabs.nexabase.foundation.config.ReactiveWebAutoConfiguration

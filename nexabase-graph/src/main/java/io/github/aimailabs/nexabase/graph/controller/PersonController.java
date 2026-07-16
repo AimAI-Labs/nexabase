@@ -1,6 +1,6 @@
 package io.github.aimailabs.nexabase.graph.controller;
 
-import io.github.aimailabs.nexabase.graph.common.Result;
+import io.github.aimailabs.nexabase.foundation.common.Result;
 import io.github.aimailabs.nexabase.graph.dto.CreateRelationshipRequest;
 import io.github.aimailabs.nexabase.graph.dto.PersonCreateRequest;
 import io.github.aimailabs.nexabase.graph.dto.PersonResponse;

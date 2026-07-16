@@ -37,6 +37,7 @@
         <langchain4j.version>1.9.1</langchain4j.version>
         <knife4j.version>4.4.0</knife4j.version>
         <hutool.version>5.8.24</hutool.version>
+        <lombok.version>1.18.38</lombok.version>
     </properties>
 
     <repositories>
@@ -177,9 +178,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
                     <!-- 保留方法参数名，避免 Spring MVC 注解需显式指定参数名 -->
                     <parameters>true</parameters>
+                    <!-- Lombok 注解处理器 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
