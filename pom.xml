@@ -177,6 +177,12 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- 统一配置所有子模块的JVM参数，仅限于 mvn spring-boot:run 启动时生效 -->
+                    <jvmArguments>
+                        -Xmx128m -XX:MaxMetaspaceSize=64m -XX:ReservedCodeCacheSize=32m -XX:MaxDirectMemorySize=16m -Xss256k
+                    </jvmArguments>
+                </configuration>
             </plugin>
         </plugins>
     </build>
