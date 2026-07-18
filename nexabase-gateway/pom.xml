@@ -17,6 +17,13 @@
             <groupId>io.github.aimai-labs.nexabase</groupId>
             <artifactId>nexabase-foundation</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <!-- 网关使用 WebFlux，需要排除 Foundation 传递过来的 MVC 版 Knife4j -->
+                <exclusion>
+                    <groupId>com.github.xiaoymin</groupId>
+                    <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -31,6 +38,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        
+        <!-- Knife4j Gateway Aggregation -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-gateway-spring-boot-starter</artifactId>
         </dependency>
     </dependencies>
 

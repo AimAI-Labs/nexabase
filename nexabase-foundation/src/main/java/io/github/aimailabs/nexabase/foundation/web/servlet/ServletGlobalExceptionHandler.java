@@ -143,6 +143,16 @@ public class ServletGlobalExceptionHandler extends BaseExceptionHandler {
     }
 
     /**
+     * 处理静态资源未找到（如 Spring Boot 3 默认不再提供 favicon.ico）。
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<Result<Void>> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        log.warn("静态资源不存在: {} {}", e.getHttpMethod(), e.getResourcePath());
+        Result<Void> result = Result.error(ResultCode.NOT_FOUND, "静态资源不存在");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
+    }
+
+    /**
      * 处理文件上传超出大小限制。
      */
     @ExceptionHandler(MaxUploadSizeExceededException.class)

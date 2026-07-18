@@ -24,8 +24,8 @@ spring:
       # 开启基于服务名的自动路由（lb://服务名），路由规则从 Nacos 拉取
       discovery:
         locator:
-          # 开启后可通过 /服务名/接口路径 访问，但与手动路由冲突时以手动路由优先
-          # 建议保持 false，使用 Nacos 中的手动路由规则，更易管控
-          enabled: false
+          # 开启后可通过 /服务名/接口路径 访问
+          # 必须开启，否则 Knife4j 聚合的后端服务文档会报 404，导致文档请求异常
+          enabled: true
   # spring.config.import 移至 application-local.yml
   # 确保在 server-addr/namespace 加载后再执行 Nacos 配置导入

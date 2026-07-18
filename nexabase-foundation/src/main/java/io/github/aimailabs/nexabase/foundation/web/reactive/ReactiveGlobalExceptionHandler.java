@@ -57,12 +57,21 @@ public class ReactiveGlobalExceptionHandler extends BaseExceptionHandler {
      * 处理 Spring WebFlux 响应状态码异常。
      * <p>
      * 常见于网关路由未匹配（404）、下游服务不可达（503）等场景。
+     * <p>
+     * 对于静态资源不存在的 404（如 Chrome DevTools 的 {@code .well-known} 请求），
+     * 降级为 DEBUG 级别，避免正常的浏览器探测请求产生日志噪音。
      */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Result<Void>> handleResponseStatus(ResponseStatusException e) {
-        log.warn("响应状态异常 [{}]: {}", e.getStatusCode().value(), e.getReason());
-        ResultCode resultCode = mapStatusCode(e.getStatusCode().value());
-        String message = e.getReason() != null ? e.getReason() : resultCode.getMessage();
+        int statusCode = e.getStatusCode().value();
+        String reason = e.getReason();
+        if (statusCode == 404 && reason != null && reason.contains("No static resource")) {
+            log.debug("静态资源不存在 [404]: {}", reason);
+        } else {
+            log.warn("响应状态异常 [{}]: {}", statusCode, reason);
+        }
+        ResultCode resultCode = mapStatusCode(statusCode);
+        String message = reason != null ? reason : resultCode.getMessage();
         Result<Void> result = Result.error(resultCode, message);
         return ResponseEntity.status(e.getStatusCode()).body(result);
     }
