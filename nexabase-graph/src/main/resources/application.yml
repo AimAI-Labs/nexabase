@@ -19,11 +19,11 @@ spring:
       password: ${NACOS_PASSWORD:nacos}
       # 服务注册与发现配置
       discovery:
-        namespace: ${NACOS_NAMESPACE:nexabase-dev}
+        namespace: ${NACOS_NAMESPACE:706a295d-b52d-4255-b1c1-0da7750c32fe}
         group: DEFAULT_GROUP
       # 配置中心配置
       config:
-        namespace: ${NACOS_NAMESPACE:nexabase-dev}
+        namespace: ${NACOS_NAMESPACE:706a295d-b52d-4255-b1c1-0da7750c32fe}
         file-extension: yml
         group: DEFAULT_GROUP
   neo4j:
