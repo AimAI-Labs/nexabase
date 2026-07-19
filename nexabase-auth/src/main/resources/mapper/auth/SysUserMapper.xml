@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.aimailabs.nexabase.auth.mapper.SysUserMapper">
+
+    <!-- 权限聚合核心查询：聚合直接角色 + 团队角色 → 角色-权限 → 权限标识 -->
+    <select id="selectPermissionKeysByUserId" resultType="java.lang.String">
+        SELECT DISTINCT p.permission_key FROM sys_permission p
+        JOIN sys_role_permission rp ON rp.permission_id = p.id
+        WHERE rp.role_id IN (
+            SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
+            UNION ALL
+            SELECT role_id FROM sys_team_role WHERE team_id IN
+            (SELECT team_id FROM sys_user_team WHERE user_id = #{userId})
+        ) AND p.permission_key IS NOT NULL AND p.is_deleted = 0
+    </select>
+
+</mapper>

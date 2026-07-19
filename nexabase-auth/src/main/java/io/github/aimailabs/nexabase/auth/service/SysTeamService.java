@@ -10,6 +10,7 @@ import io.github.aimailabs.nexabase.auth.mapper.SysTeamRoleMapper;
 import io.github.aimailabs.nexabase.auth.mapper.SysUserTeamMapper;
 import io.github.aimailabs.nexabase.foundation.common.ResultCode;
 import io.github.aimailabs.nexabase.foundation.exception.BusinessException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +44,7 @@ public class SysTeamService {
         for (SysTeam t : all) {
             TeamDTO dto = toDTO(t);
             dto.setRoleIds(teamRoleMapper.selectList(
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysTeamRole>()
+                    new LambdaQueryWrapper<SysTeamRole>()
                             .eq(SysTeamRole::getTeamId, t.getId()))
                     .stream().map(SysTeamRole::getRoleId).toList());
             dtoMap.put(t.getId(), dto);
@@ -88,12 +89,12 @@ public class SysTeamService {
     @Transactional
     public void delete(Long id) {
         // 检查子团队
-        if (!teamMapper.selectChildren(id).isEmpty()) {
+        if (!teamMapper.selectList(new LambdaQueryWrapper<SysTeam>().eq(SysTeam::getParentId, id).orderByAsc(SysTeam::getSortOrder)).isEmpty()) {
             throw new BusinessException(ResultCode.CONFLICT, "存在子团队，请先删除子团队");
         }
         teamMapper.deleteById(id);
-        teamRoleMapper.deleteByTeamId(id);
-        userTeamMapper.deleteByTeamId(id);
+        teamRoleMapper.delete(new LambdaQueryWrapper<SysTeamRole>().eq(SysTeamRole::getTeamId, id));
+        userTeamMapper.delete(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getTeamId, id));
         cacheService.evictByTeamId(id);
     }
 
@@ -103,7 +104,7 @@ public class SysTeamService {
     @Transactional
     public void assignRoles(Long teamId, List<Long> roleIds) {
         getOrThrow(teamId);
-        teamRoleMapper.deleteByTeamId(teamId);
+        teamRoleMapper.delete(new LambdaQueryWrapper<SysTeamRole>().eq(SysTeamRole::getTeamId, teamId));
         if (roleIds != null && !roleIds.isEmpty()) {
             List<SysTeamRole> list = roleIds.stream()
                     .map(rid -> new SysTeamRole(teamId, rid))
@@ -120,10 +121,11 @@ public class SysTeamService {
     public void assignUsers(Long teamId, List<Long> userIds) {
         getOrThrow(teamId);
         // 清除旧成员缓存
-        List<Long> oldUserIds = teamMapper.selectUserIdsByTeamId(teamId);
+        List<Long> oldUserIds = userTeamMapper.selectList(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getTeamId, teamId))
+                .stream().map(SysUserTeam::getUserId).toList();
         cacheService.evictUsers(oldUserIds);
 
-        userTeamMapper.deleteByTeamId(teamId);
+        userTeamMapper.delete(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getTeamId, teamId));
         if (userIds != null && !userIds.isEmpty()) {
             List<SysUserTeam> list = userIds.stream()
                     .map(uid -> new SysUserTeam(uid, teamId, 0))

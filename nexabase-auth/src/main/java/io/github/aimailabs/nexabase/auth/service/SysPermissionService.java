@@ -6,6 +6,7 @@ import io.github.aimailabs.nexabase.auth.mapper.SysPermissionMapper;
 import io.github.aimailabs.nexabase.foundation.common.ResultCode;
 import io.github.aimailabs.nexabase.foundation.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class SysPermissionService {
      * 查询权限树（全量加载后内存组装父子结构）。
      */
     public List<PermissionDTO> getTree() {
-        List<SysPermission> all = permissionMapper.selectAllOrdered();
+        List<SysPermission> all = permissionMapper.selectList(new LambdaQueryWrapper<SysPermission>().orderByAsc(SysPermission::getSortOrder));
         Map<Long, PermissionDTO> dtoMap = new LinkedHashMap<>();
         for (SysPermission p : all) {
             dtoMap.put(p.getId(), toDTO(p));
@@ -78,7 +79,7 @@ public class SysPermissionService {
     public void delete(Long id) {
         // 检查是否有子权限
         List<SysPermission> children = permissionMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysPermission>()
+                new LambdaQueryWrapper<SysPermission>()
                         .eq(SysPermission::getParentId, id));
         if (!children.isEmpty()) {
             throw new BusinessException(ResultCode.CONFLICT, "存在子权限，请先删除子权限");

@@ -5,6 +5,9 @@ import io.github.aimailabs.nexabase.auth.api.dto.auth.TokenResponse;
 import io.github.aimailabs.nexabase.auth.api.dto.auth.UserInfoDTO;
 import io.github.aimailabs.nexabase.auth.entity.SysUser;
 import io.github.aimailabs.nexabase.auth.mapper.SysUserMapper;
+import io.github.aimailabs.nexabase.auth.mapper.SysUserTeamMapper;
+import io.github.aimailabs.nexabase.auth.entity.SysUserTeam;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.github.aimailabs.nexabase.auth.security.JwtTokenService;
 import io.github.aimailabs.nexabase.foundation.common.ResultCode;
 import io.github.aimailabs.nexabase.foundation.exception.BusinessException;
@@ -36,6 +39,7 @@ import java.util.Set;
 public class AuthService {
 
     private final SysUserMapper userMapper;
+    private final SysUserTeamMapper userTeamMapper;
     private final JwtTokenService jwtTokenService;
     private final PasswordEncoder passwordEncoder;
     private final PermissionCacheService cacheService;
@@ -44,7 +48,7 @@ public class AuthService {
      * 登录。
      */
     public TokenResponse login(LoginRequest request) {
-        SysUser user = userMapper.selectByUsername(request.getUsername());
+        SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, request.getUsername()));
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BusinessException(ResultCode.UNAUTHORIZED, "用户名或密码错误");
         }
@@ -164,7 +168,8 @@ public class AuthService {
         }
         Set<String> roles = cacheService.getRoles(userId);
         Set<String> perms = cacheService.getPermissions(userId);
-        List<Long> teamIds = userMapper.selectTeamIdsByUserId(userId);
+        List<Long> teamIds = userTeamMapper.selectList(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getUserId, userId))
+                .stream().map(SysUserTeam::getTeamId).toList();
         return UserInfoDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())

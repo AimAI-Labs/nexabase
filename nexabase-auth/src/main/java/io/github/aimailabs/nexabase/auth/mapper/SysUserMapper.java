@@ -17,18 +17,14 @@ import java.util.List;
 public interface SysUserMapper extends BaseMapper<SysUser> {
 
     /**
-     * 按用户名查询用户（登录用）。
-     */
-    @Select("SELECT * FROM sys_user WHERE username = #{username} AND is_deleted = 0")
-    SysUser selectByUsername(@Param("username") String username);
-
-    /**
      * 查询用户拥有的角色 ID 集合（直接角色 ∪ 团队继承角色）。
      */
-    @Select("SELECT role_id FROM sys_user_role WHERE user_id = #{userId} " +
-            "UNION " +
-            "SELECT role_id FROM sys_team_role WHERE team_id IN " +
-            "(SELECT team_id FROM sys_user_team WHERE user_id = #{userId})")
+    @Select("""
+            SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
+            UNION ALL
+            SELECT role_id FROM sys_team_role WHERE team_id IN
+            (SELECT team_id FROM sys_user_team WHERE user_id = #{userId})
+            """)
     List<Long> selectRoleIdsByUserId(@Param("userId") Long userId);
 
     /**
@@ -36,21 +32,7 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
      * <p>
      * 超管（SUPER_ADMIN）由 Service 层短路，不走此 SQL。
      */
-    @Select("SELECT DISTINCT p.permission_key FROM sys_permission p " +
-            "JOIN sys_role_permission rp ON rp.permission_id = p.id " +
-            "WHERE rp.role_id IN (" +
-            "  SELECT role_id FROM sys_user_role WHERE user_id = #{userId} " +
-            "  UNION " +
-            "  SELECT role_id FROM sys_team_role WHERE team_id IN " +
-            "  (SELECT team_id FROM sys_user_team WHERE user_id = #{userId})" +
-            ") AND p.permission_key IS NOT NULL AND p.is_deleted = 0")
     List<String> selectPermissionKeysByUserId(@Param("userId") Long userId);
-
-    /**
-     * 查询用户所属团队 ID 集合。
-     */
-    @Select("SELECT team_id FROM sys_user_team WHERE user_id = #{userId}")
-    List<Long> selectTeamIdsByUserId(@Param("userId") Long userId);
 
     /**
      * 递增用户 JWT 版本号（用于批量踢下线）。

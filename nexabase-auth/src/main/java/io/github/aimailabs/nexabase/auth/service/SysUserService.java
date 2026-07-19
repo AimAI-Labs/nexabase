@@ -39,7 +39,7 @@ public class SysUserService {
 
     @Transactional
     public Long create(UserCreateRequest req) {
-        if (userMapper.selectByUsername(req.getUsername()) != null) {
+        if (userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, req.getUsername())) != null) {
             throw new BusinessException(ResultCode.CONFLICT, "用户名已存在");
         }
         SysUser user = new SysUser();
@@ -75,8 +75,8 @@ public class SysUserService {
     @Transactional
     public void delete(Long id) {
         userMapper.deleteById(id);
-        userRoleMapper.deleteByUserId(id);
-        userTeamMapper.deleteByUserId(id);
+        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, id));
+        userTeamMapper.delete(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getUserId, id));
         cacheService.evictUser(id);
     }
 
@@ -85,7 +85,8 @@ public class SysUserService {
         List<Long> roleIds = userRoleMapper.selectList(
                 new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, id))
                 .stream().map(SysUserRole::getRoleId).toList();
-        List<Long> teamIds = userMapper.selectTeamIdsByUserId(id);
+        List<Long> teamIds = userTeamMapper.selectList(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getUserId, id))
+                .stream().map(SysUserTeam::getTeamId).toList();
         return UserDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -147,7 +148,7 @@ public class SysUserService {
     @Transactional
     public void assignRoles(Long userId, List<Long> roleIds) {
         getOrThrow(userId);
-        userRoleMapper.deleteByUserId(userId);
+        userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
         if (roleIds != null && !roleIds.isEmpty()) {
             List<SysUserRole> list = roleIds.stream()
                     .map(rid -> new SysUserRole(userId, rid))

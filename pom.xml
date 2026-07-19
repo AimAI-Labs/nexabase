@@ -219,6 +219,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
                 <configuration>
                     <!-- 统一配置所有子模块的JVM参数，仅限于 mvn spring-boot:run 启动时生效 -->
                     <jvmArguments>

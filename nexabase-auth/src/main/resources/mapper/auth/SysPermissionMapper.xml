@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.aimailabs.nexabase.auth.mapper.SysPermissionMapper">
+
+    <select id="selectByRoleIds" resultType="io.github.aimailabs.nexabase.auth.entity.SysPermission">
+        SELECT DISTINCT p.* FROM sys_permission p
+        JOIN sys_role_permission rp ON rp.permission_id = p.id
+        WHERE p.is_deleted = 0 AND rp.role_id IN
+        <foreach collection="roleIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

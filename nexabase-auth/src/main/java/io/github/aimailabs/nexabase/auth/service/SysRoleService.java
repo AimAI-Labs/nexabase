@@ -65,7 +65,7 @@ public class SysRoleService {
             throw new BusinessException(ResultCode.BAD_REQUEST, "超级管理员角色不可删除");
         }
         roleMapper.deleteById(id);
-        rolePermissionMapper.deleteByRoleId(id);
+        rolePermissionMapper.delete(new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, id));
         cacheService.evictByRoleId(id);
     }
 
@@ -76,7 +76,7 @@ public class SysRoleService {
     @Transactional
     public void assignPermissions(Long roleId, List<Long> permissionIds) {
         getOrThrow(roleId);
-        rolePermissionMapper.deleteByRoleId(roleId);
+        rolePermissionMapper.delete(new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, roleId));
         if (permissionIds != null && !permissionIds.isEmpty()) {
             List<SysRolePermission> list = permissionIds.stream()
                     .map(pid -> new SysRolePermission(roleId, pid))
@@ -105,7 +105,8 @@ public class SysRoleService {
     }
 
     public List<Long> getPermissionIds(Long roleId) {
-        return rolePermissionMapper.selectPermissionIdsByRoleId(roleId);
+        return rolePermissionMapper.selectList(new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, roleId))
+                .stream().map(SysRolePermission::getPermissionId).toList();
     }
 
     private SysRole getOrThrow(Long id) {

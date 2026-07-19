@@ -3,10 +3,14 @@ package io.github.aimailabs.nexabase.auth.service;
 import io.github.aimailabs.nexabase.auth.api.ApiConstants;
 import io.github.aimailabs.nexabase.auth.entity.SysUser;
 import io.github.aimailabs.nexabase.auth.mapper.SysRoleMapper;
-import io.github.aimailabs.nexabase.auth.mapper.SysTeamMapper;
 import io.github.aimailabs.nexabase.auth.mapper.SysTeamRoleMapper;
+import io.github.aimailabs.nexabase.auth.mapper.SysUserTeamMapper;
 import io.github.aimailabs.nexabase.auth.mapper.SysUserMapper;
 import io.github.aimailabs.nexabase.auth.mapper.SysUserRoleMapper;
+import io.github.aimailabs.nexabase.auth.entity.SysUserRole;
+import io.github.aimailabs.nexabase.auth.entity.SysTeamRole;
+import io.github.aimailabs.nexabase.auth.entity.SysUserTeam;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -43,7 +47,7 @@ public class PermissionCacheService {
     private final SysRoleMapper roleMapper;
     private final SysUserRoleMapper userRoleMapper;
     private final SysTeamRoleMapper teamRoleMapper;
-    private final SysTeamMapper teamMapper;
+    private final SysUserTeamMapper userTeamMapper;
 
     /**
      * 获取用户权限标识集合（带缓存）。
@@ -100,10 +104,13 @@ public class PermissionCacheService {
      * 角色权限/用户角色变更时，清除所有持有该角色的用户缓存（含团队继承）。
      */
     public void evictByRoleId(Long roleId) {
-        List<Long> userIds = new ArrayList<>(userRoleMapper.selectUserIdsByRoleId(roleId));
-        List<Long> teamIds = teamRoleMapper.selectTeamIdsByRoleId(roleId);
+        List<Long> userIds = new ArrayList<>(userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getRoleId, roleId))
+                .stream().map(SysUserRole::getUserId).toList());
+        List<Long> teamIds = teamRoleMapper.selectList(new LambdaQueryWrapper<SysTeamRole>().eq(SysTeamRole::getRoleId, roleId))
+                .stream().map(SysTeamRole::getTeamId).toList();
         for (Long teamId : teamIds) {
-            userIds.addAll(teamMapper.selectUserIdsByTeamId(teamId));
+            userIds.addAll(userTeamMapper.selectList(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getTeamId, teamId))
+                    .stream().map(SysUserTeam::getUserId).toList());
         }
         evictUsers(userIds);
     }
@@ -112,7 +119,8 @@ public class PermissionCacheService {
      * 团队角色变更时，清除该团队下所有用户的缓存。
      */
     public void evictByTeamId(Long teamId) {
-        List<Long> userIds = teamMapper.selectUserIdsByTeamId(teamId);
+        List<Long> userIds = userTeamMapper.selectList(new LambdaQueryWrapper<SysUserTeam>().eq(SysUserTeam::getTeamId, teamId))
+                .stream().map(SysUserTeam::getUserId).toList();
         evictUsers(userIds);
     }
 
