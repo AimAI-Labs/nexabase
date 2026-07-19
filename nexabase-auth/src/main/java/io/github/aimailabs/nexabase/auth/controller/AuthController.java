@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,7 @@ import java.util.Set;
  * 提供登录、刷新、注销、用户信息查询，以及供 Feign 调用的内部接口。
  * 登录与刷新接口无需鉴权（网关白名单放行）。
  */
+@Tag(name = "认证接口", description = "提供登录、刷新、注销、用户信息查询等功能")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -64,6 +68,9 @@ public class AuthController {
     /**
      * 获取当前登录用户信息（角色/权限/团队）。
      */
+    @Operation(summary = "获取当前登录用户信息", description = "获取当前用户的基本信息、角色、权限及所属团队")
+    @ApiResponse(responseCode = "200", description = "成功")
+    @ApiResponse(responseCode = "401", description = "未认证或认证已过期")
     @GetMapping("/userinfo")
     public Result<UserInfoDTO> userinfo() {
         return Result.success(authService.getCurrentUserInfo());

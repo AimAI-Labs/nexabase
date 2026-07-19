@@ -115,7 +115,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
         if (path == null) {
             return false;
         }
-        return properties.getWhitelistPaths().stream().anyMatch(path::startsWith);
+        return properties.getWhitelistPaths().stream().anyMatch(path::contains);
     }
 
     /**
