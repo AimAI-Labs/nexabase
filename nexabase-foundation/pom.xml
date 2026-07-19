@@ -55,6 +55,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- AOP：权限注解切面与操作日志切面（可选） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

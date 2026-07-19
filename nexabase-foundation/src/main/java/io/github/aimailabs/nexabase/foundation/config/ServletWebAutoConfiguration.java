@@ -1,9 +1,16 @@
 package io.github.aimailabs.nexabase.foundation.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.aimailabs.nexabase.foundation.logging.OperLogAspect;
+import io.github.aimailabs.nexabase.foundation.logging.OperLogRecorder;
+import io.github.aimailabs.nexabase.foundation.security.PermissionAspect;
+import io.github.aimailabs.nexabase.foundation.security.PermissionChecker;
+import io.github.aimailabs.nexabase.foundation.security.ServletUserContextFilter;
 import io.github.aimailabs.nexabase.foundation.web.servlet.NexabaseErrorController;
 import io.github.aimailabs.nexabase.foundation.web.servlet.RequestLogFilter;
 import io.github.aimailabs.nexabase.foundation.web.servlet.ServletGlobalExceptionHandler;
 import io.github.aimailabs.nexabase.foundation.web.servlet.TraceFilter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -22,8 +29,11 @@ import org.springframework.web.servlet.DispatcherServlet;
  * <ul>
  *   <li>{@link TraceFilter} — 链路追踪过滤器（最高优先级）</li>
  *   <li>{@link RequestLogFilter} — 请求访问日志过滤器</li>
+ *   <li>{@link ServletUserContextFilter} — 用户上下文过滤器（从 Header 解析用户信息）</li>
  *   <li>{@link ServletGlobalExceptionHandler} — 全局异常处理器（{@code @RestControllerAdvice}）</li>
  *   <li>{@link NexabaseErrorController} — 错误控制器（处理 404 等非 Controller 异常）</li>
+ *   <li>{@link PermissionAspect} — 权限校验切面（拦截 {@code @RequiresPermissions}/{@code @RequiresRoles}）</li>
+ *   <li>{@link OperLogAspect} — 操作日志切面（拦截 {@code @Log}）</li>
  * </ul>
  * <p>
  * 引入 {@code nexabase-foundation} 依赖的 MVC 模块无需任何额外配置即可自动生效。
@@ -59,6 +69,18 @@ public class ServletWebAutoConfiguration {
     }
 
     /**
+     * 注册用户上下文过滤器，在 TraceFilter 之后执行，从网关透传的 Header 解析用户信息。
+     */
+    @Bean
+    public FilterRegistrationBean<ServletUserContextFilter> userContextFilterRegistration() {
+        FilterRegistrationBean<ServletUserContextFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new ServletUserContextFilter());
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 20);
+        registration.setName("userContextFilter");
+        return registration;
+    }
+
+    /**
      * 注册全局异常处理器，拦截所有 Controller 层异常。
      */
     @Bean
@@ -72,5 +94,26 @@ public class ServletWebAutoConfiguration {
     @Bean
     public NexabaseErrorController nexabaseErrorController() {
         return new NexabaseErrorController();
+    }
+
+    /**
+     * 注册权限校验切面，拦截 {@code @RequiresPermissions} 与 {@code @RequiresRoles}。
+     * <p>
+     * {@link PermissionChecker} 为可选依赖，未注入时切面放行并输出 WARN。
+     */
+    @Bean
+    public PermissionAspect permissionAspect(ObjectProvider<PermissionChecker> permissionCheckerProvider) {
+        return new PermissionAspect(permissionCheckerProvider);
+    }
+
+    /**
+     * 注册操作日志切面，拦截 {@code @Log} 注解采集操作信息。
+     * <p>
+     * {@link OperLogRecorder} 为可选依赖，未注入时切面仅输出 WARN。
+     */
+    @Bean
+    public OperLogAspect operLogAspect(ObjectProvider<OperLogRecorder> recorderProvider,
+                                       ObjectMapper objectMapper) {
+        return new OperLogAspect(recorderProvider, objectMapper);
     }
 }

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>nexabase-parent</artifactId>
+        <groupId>io.github.aimai-labs.nexabase</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>nexabase-auth-api</artifactId>
+    <description>nexabase 认证授权对外 API 契约：DTO、Feign 客户端、权限校验默认实现</description>
+
+    <dependencies>
+        <!-- Nexabase 公共基础模块：PermissionChecker SPI、OperLog SPI、Result、UserContext -->
+        <dependency>
+            <groupId>io.github.aimai-labs.nexabase</groupId>
+            <artifactId>nexabase-foundation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Redis：RedisPermissionChecker 默认实现依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- OpenFeign：跨服务调用 auth 内部接口 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Servlet API：Feign 请求拦截器从当前 HTTP 请求读取 Header（可选） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -22,3 +22,19 @@ spring:
         group: DEFAULT_GROUP
   # spring.config.import 移至 application-local.yml
   # 确保在 server-addr/namespace 加载后再执行 Nacos 配置导入
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-field: is_deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Flyway 数据库迁移
+spring.flyway:
+  enabled: true
+  locations: classpath:db/migration
+  baseline-on-migrate: true

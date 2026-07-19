@@ -58,5 +58,5 @@ assets/
 docs/
 scripts/
 .worktrees/
-config/
+config/nacos/
 docker/**/
