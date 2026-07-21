@@ -16,7 +16,9 @@
         <module>nexabase-gateway</module>
         <module>nexabase-auth-api</module>
         <module>nexabase-auth</module>
+        <module>nexabase-document-api</module>
         <module>nexabase-document</module>
+        <module>nexabase-file-api</module>
         <module>nexabase-file</module>
         <module>nexabase-search</module>
         <module>nexabase-statistics</module>
