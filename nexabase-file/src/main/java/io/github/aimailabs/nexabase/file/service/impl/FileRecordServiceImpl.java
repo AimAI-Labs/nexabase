@@ -44,7 +44,7 @@ public class FileRecordServiceImpl implements FileRecordService {
      * 上传文件至对象存储（支持秒传）。
      * <p>
      * 秒传逻辑：同一租户下相同 MD5 的文件会复用物理存储，
-     * 但仍为当前用户创建独立的文件记录，保证租户数据隔离。
+     * 但仍为当前上传创建独立的文件记录，保证租户数据隔离和审计追溯。
      *
      * @param file     上传的文件
      * @param tenantId 租户ID
@@ -58,7 +58,9 @@ public class FileRecordServiceImpl implements FileRecordService {
             throw new BusinessException(ResultCode.BAD_REQUEST, "上传文件为空");
         }
 
-        String md5 = DigestUtil.md5Hex(file.getInputStream());
+        // 计算文件 MD5（需要可重复读取流，所以先读取字节数组）
+        byte[] fileBytes = file.getBytes();
+        String md5 = DigestUtil.md5Hex(fileBytes);
 
         // 秒传检测：同租户下相同 MD5 可复用 objectPath
         FileRecord existRecord = fileRecordMapper.selectOne(
@@ -71,7 +73,7 @@ public class FileRecordServiceImpl implements FileRecordService {
 
         String objectPath;
         if (existRecord != null) {
-            // 秒传：复用物理存储路径，但创建新记录
+            // 秒传：复用物理存储路径
             log.info("文件秒传命中, MD5={}, 复用 objectPath={}", md5, existRecord.getObjectPath());
             objectPath = existRecord.getObjectPath();
         } else {
@@ -83,12 +85,12 @@ public class FileRecordServiceImpl implements FileRecordService {
                             .key(objectPath)
                             .contentType(file.getContentType())
                             .build(),
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
+                    RequestBody.fromBytes(fileBytes)
             );
             log.info("文件上传成功, objectPath={}, size={}", objectPath, file.getSize());
         }
 
-        // 为当前上传创建独立的 DB 记录
+        // 为当前上传创建独立的 DB 记录（支持多租户隔离和审计追溯）
         FileRecord record = new FileRecord();
         record.setFileName(file.getOriginalFilename());
         record.setMd5(md5);

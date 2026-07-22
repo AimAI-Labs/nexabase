@@ -50,7 +50,9 @@ public class DocCategoryServiceImpl implements DocCategoryService {
             throw new BusinessException(ResultCode.CONFLICT, "同级目录下名称「" + category.getName() + "」已存在");
         }
 
-        // 先插入以获取雪花 ID，再计算物化路径
+        // 方案：先设置临时路径 "/" 以通过数据库 NOT NULL 校验
+        // 插入后立即更新为正确的物化路径
+        category.setPath("/");
         mapper.insert(category);
 
         // 计算物化路径：父路径 + 自身ID + /
