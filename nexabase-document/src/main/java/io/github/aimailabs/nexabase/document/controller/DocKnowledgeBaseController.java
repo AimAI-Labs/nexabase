@@ -3,14 +3,18 @@ package io.github.aimailabs.nexabase.document.controller;
 import io.github.aimailabs.nexabase.document.entity.DocKnowledgeBase;
 import io.github.aimailabs.nexabase.document.service.DocKnowledgeBaseService;
 import io.github.aimailabs.nexabase.foundation.common.Result;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
-
+import io.github.aimailabs.nexabase.foundation.security.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
+/**
+ * 知识库管理接口。
+ * <p>
+ * 提供知识库的创建、查询与删除功能。
+ */
 @Tag(name = "知识库管理", description = "知识库的创建、查询与删除")
 @RestController
 @RequestMapping("/api/v1/document/kb")
@@ -21,10 +25,9 @@ public class DocKnowledgeBaseController {
 
     @Operation(summary = "创建知识库", description = "创建一个新的知识库集合")
     @PostMapping
-    public Result<DocKnowledgeBase> create(@RequestBody DocKnowledgeBase kb, HttpServletRequest request) {
-        Long userId = getUserId(request);
-        kb.setCreatedBy(userId);
-        kb.setOwnerId(userId);
+    public Result<DocKnowledgeBase> create(@RequestBody DocKnowledgeBase kb) {
+        Long userId = UserContext.getCurrentUserId();
+        kb.setOwnerId(userId != null ? userId : 1L);
         return Result.success(kbService.create(kb));
     }
 
@@ -38,14 +41,9 @@ public class DocKnowledgeBaseController {
     @Operation(summary = "删除知识库", description = "逻辑删除知识库及其下所有分类和文档")
     @DeleteMapping("/{id}")
     public Result<Void> delete(
-            @Parameter(description = "知识库ID", required = true) @PathVariable Long id, 
-            HttpServletRequest request) {
-        kbService.delete(id, getUserId(request));
-        return Result.success(null);
-    }
-
-    private Long getUserId(HttpServletRequest request) {
-        String userIdStr = request.getHeader("X-User-Id");
-        return (userIdStr != null && !userIdStr.isEmpty()) ? Long.parseLong(userIdStr) : 1L;
+            @Parameter(description = "知识库ID", required = true) @PathVariable Long id) {
+        Long userId = UserContext.getCurrentUserId();
+        kbService.delete(id, userId != null ? userId : 1L);
+        return Result.success();
     }
 }
