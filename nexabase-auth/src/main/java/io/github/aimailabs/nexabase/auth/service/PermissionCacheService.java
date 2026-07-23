@@ -173,10 +173,18 @@ public class PermissionCacheService {
      * <p>
      * 返回 null 表示未命中（key 不存在）；空集合表示已命中但无数据（占位标记）。
      * 占位标记 {@code __empty__} 会被过滤掉。
+     * <p>
+     * 注意：Redis {@code SMEMBERS} 对不存在的 key 返回空数组（而非 null），
+     * 因此不能用 null 判断缓存未命中。此处用 {@code __empty__} 占位符区分：
+     * <ul>
+     *   <li>key 不存在 → members 为空 → 返回 null（缓存未命中，触发回源）</li>
+     *   <li>key 存在且仅含 {@code __empty__} → 返回空集合（缓存命中，数据为空）</li>
+     *   <li>key 存在且含实际数据 → 返回该集合（缓存命中）</li>
+     * </ul>
      */
     private Set<String> readSet(String key) {
         Set<String> members = redis.opsForSet().members(key);
-        if (members == null) {
+        if (members == null || members.isEmpty()) {
             return null;
         }
         members.remove("__empty__");
