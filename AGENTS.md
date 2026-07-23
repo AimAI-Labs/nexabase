@@ -17,7 +17,7 @@
 - **开发语言**: Java 21 LTS（优先使用新特性和语法糖）
 
 ## 核心技术栈与选型 (Tech Stack & Choices)
-AI 助手在编写代码时，需严格使用以下指定技术及其对应版本的特性：
+AI 助手在编写代码时，需严格使用以下指定技术及其对应版本的特性，时刻注意各个版本间的兼容性：
 - **核心框架**: Spring Boot 3.5.x + Spring Cloud 2025.0.x + Spring Cloud Alibaba 2025.0.0.0
 - **数据库群**:
   - **关系型**: MySQL 8.4.4 (多服务独立库 `database-per-service`)
@@ -40,7 +40,7 @@ AI 助手在编写代码时，需严格使用以下指定技术及其对应版�
 - `nexabase-gateway`: API 网关层（统一入口、JWT 解析校验透传 `X-User-Id`、网关级限流规则拦截）。
 - `nexabase-auth`: 认证与授权模块（RBAC 权限管理、团队管理）。
 - `nexabase-document`: 文档核心业务（CRUD、生命周期管理、向 MQ 投递异步向量化与索引同步事件）。
-- `nexabase-file`: 文件服务（MinIO/OSS 对接、大文件分片、MQ 异步视频转码）。
+- `nexabase-file`: 文件服务（S3/OSS/COS 对接、大文件分片、MQ 异步视频转码）。
 - `nexabase-search`: 检索服务（ES 关键词召回 + Qdrant 向量召回，RRF 多路融合重排）。
 - `nexabase-ai`: AI 核心服务（对接大模型、RAG/KAG 对话问答、Prompt 构建，异步消费 MQ 执行文本分块与 Embedding）。
 - `nexabase-graph`: 知识图谱服务（实体关系抽取、Neo4j 多跳遍历查询）。
@@ -50,7 +50,7 @@ AI 助手在编写代码时，需严格使用以下指定技术及其对应版�
 
 ### 接口与文档规范 (API & Documentation)
 - **API 路径**: 统一 API 请求路径前缀为 `/api/v1`。
-- **接口文档注释**: 接口文档由 Apifox IDEA 插件依据 Javadoc 自动生成，注释规范必须严格参考 [Apifox IDEA 接口文档生成规范](https://docs.apifox.com/generate-api-docs-with-idea)，要点：
+- **接口文档注释**: 接口文档由 Apifox IDEA 插件依据 Javadoc 自动生成，注释规范必须严格参考 [Apifox IDEA 接口文档生成规范](https://docs.apifox.com/generate-api-docs-with-idea)。
   - **类级 Javadoc**：首行作为接口文件名，支持 `父目录/文件名` 嵌套生成文件夹结构；使用 `@module` 标签声明该接口所属微服务（如 `nexabase-auth`）。
   - **方法级 Javadoc**：首行简述接口用途；通过 `@param` 标注每个入参含义，`@return` 标注响应含义，供插件自动提取请求/响应模型。
   - **请求体**：使用 `@RequestBody` 的参数将自动识别为 `application/json` 类型。
@@ -86,6 +86,7 @@ AI 助手在编写代码时，需严格使用以下指定技术及其对应版�
 - **混合检索**: RAG 和 KAG 的高阶混合检索流程必须置于 `nexabase-ai` 中，分别联动 Elasticsearch (BM25路) 和 Qdrant (向量路)，最终使用 RRF 算法执行多路加权融合。
 
 ## AI 行为与交互准则 (AI Agent Behaviors)
+- **工具调用**: 基于当前所在开发环境，选择合适的命令工具，win下使用`pwsh.exe`，linux下使用`bash`。
 - **上下文感知**: 在修改或创建文件时，自动识别其所属微服务模块，并主动引入所在模块或 `foundation` 基础库中已存在的依赖/组件，禁止随意造轮子。
 - **最小变更原则**: 仅修改与当前任务强相关的代码；切勿随意格式化无关代码区块，严禁删除其他开发者保留的关键注释或 TODO。
 - **严格资源控制**: 微服务本地启动遵循统一的低内存限制（如 `-Xmx128m`），在开发中需主动防范大对象驻留和连接池未释放造成的 OOM 及系统卡顿。
