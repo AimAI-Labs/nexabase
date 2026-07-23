@@ -21,12 +21,20 @@ spring:
         file-extension: yml
         group: DEFAULT_GROUP
     gateway:
-      # 开启基于服务名的自动路由（lb://服务名），路由规则从 Nacos 拉取
-      discovery:
-        locator:
-          # 开启后可通过 /服务名/接口路径 访问
-          # 必须开启，否则 Knife4j 聚合的后端服务文档会报 404，导致文档请求异常
-          enabled: true
+      # Spring Cloud 2025.0+ 配置前缀变更：
+      # spring.cloud.gateway.* → spring.cloud.gateway.server.webflux.*
+      # （对应 spring-cloud-gateway-server-webflux 构件）
+      # 参考：https://spring.io/blog/2025/05/29/spring-cloud-2025-0-0-is-abvailable#spring-cloud-gateway
+      server:
+        webflux:
+          # 默认路由兜底配置：当 Nacos（nexabase-gateway-dev.yml）未下发路由时保证网关可用。
+          # Nacos 配置优先级更高，可动态覆盖或新增路由。
+          # 开启基于服务名的自动路由（lb://服务名），路由规则从 Nacos 拉取
+          discovery:
+            locator:
+              # 开启后可通过 /服务名/接口路径 访问
+              # 必须开启，否则 Knife4j 聚合的后端服务文档会报 404，导致文档请求异常
+              enabled: true
   # spring.config.import 移至 application-local.yml
   # 确保在 server-addr/namespace 加载后再执行 Nacos 配置导入
 
