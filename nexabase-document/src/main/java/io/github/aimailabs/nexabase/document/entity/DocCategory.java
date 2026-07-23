@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ public class DocCategory {
     private String path;
 
     /** 目录名称 */
+    @NotBlank(message = "目录名称不能为空")
     private String name;
 
     /** 排序权重 */
