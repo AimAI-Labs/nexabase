@@ -11,6 +11,13 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 网关 / Nacos 连通性测试接口
+ * <p>
+ * 用于校验网关与 Nacos 注册中心的连接状态（内部运维用途）。
+ *
+ * @module nexabase-gateway
+ */
 @RestController
 @RequestMapping("/test/nacos")
 public class NacosTestController {
@@ -21,6 +28,11 @@ public class NacosTestController {
     @Value("${spring.application.name:}")
     private String applicationName;
 
+    /**
+     * 检查网关与 Nacos 注册中心的连接状态。
+     *
+     * @return 包含应用名与已注册服务列表的连通性结果
+     */
     @GetMapping("/status")
     public Mono<Map<String, Object>> getNacosStatus() {
         Map<String, Object> result = new HashMap<>();

@@ -20,9 +20,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 文件管理接口。
+ * 文件服务 / 文件管理接口
  * <p>
  * 提供文件上传、下载与逻辑删除功能，所有操作自动记录操作人。
+ *
+ * @module nexabase-file
  */
 @Tag(name = "文件管理", description = "文件上传、下载与删除等操作")
 @RestController
@@ -64,7 +66,7 @@ public class FileRecordController {
      * <p>
      * 返回文件流，浏览器将根据 Content-Disposition 自动触发下载。
      *
-     * @param id 文件记录ID
+     * @param id 文件记录 ID
      * @return 文件流响应
      */
     @Operation(summary = "下载文件", description = "根据ID下载文件，支持流式传输")
@@ -95,7 +97,7 @@ public class FileRecordController {
      * <p>
      * 仅标记记录为已删除，物理文件由后台定时任务清理。
      *
-     * @param id 文件记录ID
+     * @param id 文件记录 ID
      * @return 成功响应
      */
     @Operation(summary = "删除文件", description = "逻辑删除指定ID的文件记录，后台异步物理清理")

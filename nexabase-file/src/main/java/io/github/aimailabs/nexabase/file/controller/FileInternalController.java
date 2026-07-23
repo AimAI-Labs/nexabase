@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 文件服务内部接口（供 Feign 调用）。
+ * 文件服务 / 文件内部接口
  * <p>
  * 此接口不经过网关鉴权，仅供微服务间调用，返回原始数据（不包装 Result）。
+ *
+ * @module nexabase-file
  */
 @RestController
 @RequestMapping("/api/v1/file/internal")
@@ -23,9 +25,9 @@ public class FileInternalController {
     private final FileRecordService fileRecordService;
 
     /**
-     * 根据ID查询文件元数据（内部接口）。
+     * 根据 ID 查询文件元数据（内部接口）。
      *
-     * @param id 文件ID
+     * @param id 文件 ID
      * @return 文件元数据 DTO
      */
     @GetMapping("/{id}")

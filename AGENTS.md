@@ -50,7 +50,12 @@ AI 助手在编写代码时，需严格使用以下指定技术及其对应版�
 
 ### 接口与文档规范 (API & Documentation)
 - **API 路径**: 统一 API 请求路径前缀为 `/api/v1`。
-- **接口文档注释**: 接口文档的注释规范参考 [Apifox](https://docs.apifox.com/llms.txt)。
+- **接口文档注释**: 接口文档由 Apifox IDEA 插件依据 Javadoc 自动生成，注释规范必须严格参考 [Apifox IDEA 接口文档生成规范](https://docs.apifox.com/generate-api-docs-with-idea)，要点：
+  - **类级 Javadoc**：首行作为接口文件名，支持 `父目录/文件名` 嵌套生成文件夹结构；使用 `@module` 标签声明该接口所属微服务（如 `nexabase-auth`）。
+  - **方法级 Javadoc**：首行简述接口用途；通过 `@param` 标注每个入参含义，`@return` 标注响应含义，供插件自动提取请求/响应模型。
+  - **请求体**：使用 `@RequestBody` 的参数将自动识别为 `application/json` 类型。
+  - **废弃标记**：接口或参数废弃时使用 `@Deprecated` 或 Javadoc `@deprecated` 标签。
+  - 请求/响应 DTO、实体类的字段需补充字段级 Javadoc，以保证生成的数据模型字段含义清晰。
 - **HTTP 状态码语义**: 编写接口代码时，必须使用语义准确的 HTTP 状态码，严谨处理业务逻辑校验与操作状态（如幂等性），并返回结构化且清晰友好的错误提示信息。
 
 ### 通信与微服务交互规范
