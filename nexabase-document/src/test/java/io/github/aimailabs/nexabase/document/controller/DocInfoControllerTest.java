@@ -3,10 +3,12 @@ package io.github.aimailabs.nexabase.document.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.aimailabs.nexabase.document.entity.DocInfo;
 import io.github.aimailabs.nexabase.document.service.DocInfoService;
+import io.github.aimailabs.nexabase.foundation.security.ServletUserContextFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -17,6 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(DocInfoController.class)
+@Import(ServletUserContextFilter.class)
 public class DocInfoControllerTest {
 
     @Autowired

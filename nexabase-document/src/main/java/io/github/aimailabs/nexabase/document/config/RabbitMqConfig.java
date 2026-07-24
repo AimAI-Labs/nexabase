@@ -2,9 +2,11 @@ package io.github.aimailabs.nexabase.document.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -105,6 +107,30 @@ public class RabbitMqConfig {
     }
 
     // ==================== Converter ====================
+
+    /**
+     * 显式声明 RabbitAdmin，用于在应用启动时创建 Exchange、Queue 和 Binding。
+     * <p>
+     * 注意：Spring AMQP 3.x 中 RabbitAdmin 的 declare 动作挂在 ConnectionListener 回调上，
+     * 只有连接首次建立才会触发。本模块为纯消息生产者（无 @RabbitListener），
+     * CachingConnectionFactory 默认惰性连接，启动时不会建连，故需由下方
+     * {@link #rabbitAdminInitializer} 主动触发。
+     */
+    @Bean
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+        rabbitAdmin.setAutoStartup(true);
+        return rabbitAdmin;
+    }
+
+    /**
+     * 应用就绪后主动调用 {@link RabbitAdmin#initialize()}，强制建立连接并完成
+     * Exchange/Queue/Binding 的声明，确保纯生产者场景下远程 MQ 也能看到队列资源。
+     */
+    @Bean
+    public ApplicationRunner rabbitAdminInitializer(RabbitAdmin rabbitAdmin) {
+        return args -> rabbitAdmin.initialize();
+    }
 
     /**
      * 使用 JSON 序列化消息，确保跨服务兼容。
