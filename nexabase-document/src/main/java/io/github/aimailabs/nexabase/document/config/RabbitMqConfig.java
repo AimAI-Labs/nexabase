@@ -145,11 +145,14 @@ public class RabbitMqConfig {
      */
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
-                                          MessageConverter jsonMessageConverter) {
+                                          MessageConverter jsonMessageConverter,
+                                          io.github.aimailabs.nexabase.foundation.trace.MqTraceMessagePostProcessor mqTraceMessagePostProcessor) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(jsonMessageConverter);
         // 消息无法路由到队列时，回调通知（防止消息静默丢失）
         template.setMandatory(true);
+        // 发送前注入 TraceID 到 AMQP header，实现 MQ 链路追踪
+        template.setBeforePublishPostProcessors(mqTraceMessagePostProcessor);
         return template;
     }
 }

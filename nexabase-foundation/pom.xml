@@ -55,6 +55,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- AMQP（可选）：模块引入 spring-boot-starter-amqp 时激活 MQ TraceID 传播（生产者 PostProcessor + 消费者 Advice） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- AOP：权限注解切面与操作日志切面（可选） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -72,6 +79,12 @@
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Caffeine 缓存实现（消除 Spring Cloud LoadBalancer 默认缓存警告） -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
     </dependencies>
 

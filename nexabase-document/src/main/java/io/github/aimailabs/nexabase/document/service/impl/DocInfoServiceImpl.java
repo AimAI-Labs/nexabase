@@ -2,6 +2,7 @@ package io.github.aimailabs.nexabase.document.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.github.aimailabs.nexabase.document.api.event.DocumentChangedEvent;
+import io.github.aimailabs.nexabase.document.config.RabbitMqConfig;
 import io.github.aimailabs.nexabase.document.entity.DocContent;
 import io.github.aimailabs.nexabase.document.entity.DocInfo;
 import io.github.aimailabs.nexabase.document.mapper.DocInfoMapper;
@@ -34,9 +35,6 @@ public class DocInfoServiceImpl implements DocInfoService {
     private final DocContentRepository docContentRepository;
     private final RabbitTemplate rabbitTemplate;
 
-    public static final String EXCHANGE_NAME = "document.exchange";
-    public static final String ROUTING_KEY = "document.changed";
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public DocInfo create(DocInfo docInfo, String content) {
@@ -59,7 +57,7 @@ public class DocInfoServiceImpl implements DocInfoService {
 
         // 异步投递向量化与索引同步事件
         DocumentChangedEvent event = new DocumentChangedEvent(docInfo.getId(), "CREATE", System.currentTimeMillis());
-        rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, event);
+        rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE_DOCUMENT, RabbitMqConfig.ROUTING_KEY_CHANGED, event);
         log.info("文档创建成功，docId={}, 已投递 CREATE 事件", docInfo.getId());
 
         return docInfo;
@@ -110,7 +108,7 @@ public class DocInfoServiceImpl implements DocInfoService {
 
         // 投递 UPDATE 事件
         DocumentChangedEvent event = new DocumentChangedEvent(id, "UPDATE", System.currentTimeMillis());
-        rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, event);
+        rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE_DOCUMENT, RabbitMqConfig.ROUTING_KEY_CHANGED, event);
         log.info("文档更新成功，docId={}, 已投递 UPDATE 事件", id);
 
         return existDoc;
@@ -141,7 +139,7 @@ public class DocInfoServiceImpl implements DocInfoService {
 
         // 发送删除事件
         DocumentChangedEvent event = new DocumentChangedEvent(id, "DELETE", System.currentTimeMillis());
-        rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, event);
+        rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE_DOCUMENT, RabbitMqConfig.ROUTING_KEY_CHANGED, event);
         log.info("文档删除成功，docId={}, 已投递 DELETE 事件", id);
     }
 }

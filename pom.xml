@@ -38,6 +38,7 @@
         <druid.version>1.2.25</druid.version>
         <jjwt.version>0.13.0</jjwt.version>
         <langchain4j.version>1.9.1</langchain4j.version>
+        <langchain4j-community.version>1.9.1-beta17</langchain4j-community.version>
         <knife4j.version>4.5.0</knife4j.version>
         <springdoc-openapi.version>2.8.9</springdoc-openapi.version>
         <hutool.version>5.8.24</hutool.version>
@@ -164,6 +165,22 @@
                 <version>${langchain4j.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- LangChain4j Community（DashScope/Qdrant 等社区集成，版本与核心对齐为 1.9.1-beta17） -->
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-community-bom</artifactId>
+                <version>${langchain4j-community.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- 强制覆盖 Qdrant 客户端版本为 1.18.0，以匹配远程 1.18.3 服务端 -->
+            <dependency>
+                <groupId>io.qdrant</groupId>
+                <artifactId>client</artifactId>
+                <version>1.18.0</version>
             </dependency>
 
             <!-- Knife4j -->
