@@ -7,6 +7,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -136,6 +137,7 @@ public class RabbitMqConfig {
      * 使用 JSON 序列化消息，确保跨服务兼容。
      */
     @Bean
+    @ConditionalOnMissingBean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
