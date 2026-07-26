@@ -24,6 +24,9 @@ public class DocKnowledgeBaseServiceImpl implements DocKnowledgeBaseService {
         if (nameExists) {
             throw new BusinessException(ResultCode.CONFLICT, "知识库名称「" + kb.getName() + "」已存在，请更换名称");
         }
+        if (kb.getTenantId() == null) {
+            kb.setTenantId(1L);
+        }
         mapper.insert(kb);
         return kb;
     }

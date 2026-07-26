@@ -5,7 +5,9 @@ import io.github.aimailabs.nexabase.document.api.event.DocumentChangedEvent;
 import io.github.aimailabs.nexabase.document.config.RabbitMqConfig;
 import io.github.aimailabs.nexabase.document.entity.DocContent;
 import io.github.aimailabs.nexabase.document.entity.DocInfo;
+import io.github.aimailabs.nexabase.document.entity.DocKnowledgeBase;
 import io.github.aimailabs.nexabase.document.mapper.DocInfoMapper;
+import io.github.aimailabs.nexabase.document.mapper.DocKnowledgeBaseMapper;
 import io.github.aimailabs.nexabase.document.repository.DocContentRepository;
 import io.github.aimailabs.nexabase.document.service.DocInfoService;
 import io.github.aimailabs.nexabase.foundation.common.ResultCode;
@@ -34,6 +36,7 @@ public class DocInfoServiceImpl implements DocInfoService {
     private final DocInfoMapper docInfoMapper;
     private final DocContentRepository docContentRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final DocKnowledgeBaseMapper docKnowledgeBaseMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -45,6 +48,16 @@ public class DocInfoServiceImpl implements DocInfoService {
                 .eq(DocInfo::getIsDeleted, 0));
         if (titleExists) {
             throw new BusinessException(ResultCode.CONFLICT, "同分类下文档标题「" + docInfo.getTitle() + "」已存在，请更换标题");
+        }
+
+        // 继承所属知识库的租户ID
+        if (docInfo.getTenantId() == null) {
+            DocKnowledgeBase kb = docKnowledgeBaseMapper.selectById(docInfo.getKbId());
+            if (kb != null) {
+                docInfo.setTenantId(kb.getTenantId());
+            } else {
+                docInfo.setTenantId(1L);
+            }
         }
 
         docInfoMapper.insert(docInfo);

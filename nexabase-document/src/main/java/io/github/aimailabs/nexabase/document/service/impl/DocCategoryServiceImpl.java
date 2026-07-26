@@ -2,8 +2,10 @@ package io.github.aimailabs.nexabase.document.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.github.aimailabs.nexabase.document.entity.DocCategory;
+import io.github.aimailabs.nexabase.document.entity.DocKnowledgeBase;
 import io.github.aimailabs.nexabase.document.mapper.DocCategoryMapper;
 import io.github.aimailabs.nexabase.document.mapper.DocInfoMapper;
+import io.github.aimailabs.nexabase.document.mapper.DocKnowledgeBaseMapper;
 import io.github.aimailabs.nexabase.document.entity.DocInfo;
 import io.github.aimailabs.nexabase.document.service.DocCategoryService;
 import io.github.aimailabs.nexabase.foundation.common.ResultCode;
@@ -32,6 +34,7 @@ public class DocCategoryServiceImpl implements DocCategoryService {
 
     private final DocCategoryMapper mapper;
     private final DocInfoMapper docInfoMapper;
+    private final DocKnowledgeBaseMapper docKnowledgeBaseMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -48,6 +51,16 @@ public class DocCategoryServiceImpl implements DocCategoryService {
                 .eq(DocCategory::getIsDeleted, 0));
         if (nameExists) {
             throw new BusinessException(ResultCode.CONFLICT, "同级目录下名称「" + category.getName() + "」已存在");
+        }
+
+        // 继承所属知识库的租户ID
+        if (category.getTenantId() == null) {
+            DocKnowledgeBase kb = docKnowledgeBaseMapper.selectById(category.getKbId());
+            if (kb != null) {
+                category.setTenantId(kb.getTenantId());
+            } else {
+                category.setTenantId(1L);
+            }
         }
 
         // 方案：先设置临时路径 "/" 以通过数据库 NOT NULL 校验
