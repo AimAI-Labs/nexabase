@@ -48,6 +48,10 @@ public class RagRetrievalServiceImpl implements RagRetrievalService {
     private List<FusedHit> vectorSearch(String query) {
         try {
             Embedding embedding = embeddingModel.embed(query).content();
+            if (embedding == null || embedding.vector() == null || embedding.vector().length == 0) {
+                log.warn("Query 向量计算失败或向量长度为0，跳过向量召回");
+                return List.of();
+            }
             EmbeddingSearchRequest req = EmbeddingSearchRequest.builder()
                     .queryEmbedding(embedding)
                     .maxResults(PER_PATH_LIMIT)

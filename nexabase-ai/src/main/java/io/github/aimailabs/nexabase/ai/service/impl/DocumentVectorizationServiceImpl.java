@@ -83,6 +83,16 @@ public class DocumentVectorizationServiceImpl implements DocumentVectorizationSe
 
         // 批量 Embedding + 写入
         List<Embedding> embeddings = embeddingModel.embedAll(enriched).content();
+        if (embeddings == null || embeddings.isEmpty()) {
+            log.error("文档 docId={} 向量计算返回空结果，放弃写入 Qdrant", docId);
+            return;
+        }
+        for (Embedding emb : embeddings) {
+            if (emb == null || emb.vector() == null || emb.vector().length == 0) {
+                log.error("文档 docId={} 计算出无效向量(长度为0)，放弃写入 Qdrant", docId);
+                return;
+            }
+        }
         ensureCollectionExists();
         embeddingStore.addAll(embeddings, enriched);
         log.info("文档 docId={} 向量化完成，共 {} 块", docId, enriched.size());
