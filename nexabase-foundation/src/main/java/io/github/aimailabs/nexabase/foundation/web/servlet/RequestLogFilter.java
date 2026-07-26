@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -66,13 +67,18 @@ public class RequestLogFilter extends OncePerRequestFilter {
             requestToUse = new ContentCachingRequestWrapper(request);
         }
 
+        HttpServletResponse responseToUse = response;
+        if (!(response instanceof ContentCachingResponseWrapper)) {
+            responseToUse = new ContentCachingResponseWrapper(response);
+        }
+
         long startTime = System.currentTimeMillis();
 
         try {
-            filterChain.doFilter(requestToUse, response);
+            filterChain.doFilter(requestToUse, responseToUse);
         } finally {
             long duration = System.currentTimeMillis() - startTime;
-            int status = response.getStatus();
+            int status = responseToUse.getStatus();
             
             String requestBody = "";
             if (requestToUse instanceof ContentCachingRequestWrapper wrapper) {
@@ -80,14 +86,41 @@ public class RequestLogFilter extends OncePerRequestFilter {
                 if (buf.length > 0) {
                     int length = Math.min(buf.length, 1024); // 限制打印长度避免刷屏
                     String payload = new String(buf, 0, length, StandardCharsets.UTF_8);
-                    requestBody = " | Body: " + payload.replaceAll("\\r\\n|\\r|\\n", " ");
+                    requestBody = " | ReqBody: " + payload.replaceAll("\\r\\n|\\r|\\n", " ");
                     if (buf.length > 1024) {
                         requestBody += "...(truncated)";
                     }
                 }
             }
+
+            String responseBody = "";
+            if (responseToUse instanceof ContentCachingResponseWrapper responseWrapper) {
+                byte[] buf = responseWrapper.getContentAsByteArray();
+                if (buf.length > 0) {
+                    String resContentType = responseWrapper.getContentType();
+                    boolean isBinary = resContentType != null &&
+                            (resContentType.contains("image/") ||
+                             resContentType.contains("video/") ||
+                             resContentType.contains("audio/") ||
+                             resContentType.contains("application/octet-stream") ||
+                             resContentType.contains("application/pdf") ||
+                             resContentType.contains("application/zip"));
+                    if (!isBinary) {
+                        int length = Math.min(buf.length, 1024); // 限制打印长度
+                        String payload = new String(buf, 0, length, StandardCharsets.UTF_8);
+                        responseBody = " | ResBody: " + payload.replaceAll("\\r\\n|\\r|\\n", " ");
+                        if (buf.length > 1024) {
+                            responseBody += "...(truncated)";
+                        }
+                    } else {
+                        responseBody = " | ResBody: [<binary data " + buf.length + " bytes>]";
+                    }
+                }
+                // 必须将缓存的响应体刷回原始 HttpServletResponse
+                responseWrapper.copyBodyToResponse();
+            }
             
-            log.info("→ [{}] [{}] {} {} → {} ({}ms){} | Auth:[{}]", clientIp, displayUserId, method, fullUri, status, duration, requestBody, displayAuth);
+            log.info("→ [{}] [{}] {} {} → {} ({}ms){}{} | Auth:[{}]", clientIp, displayUserId, method, fullUri, status, duration, requestBody, responseBody, displayAuth);
         }
     }
 
