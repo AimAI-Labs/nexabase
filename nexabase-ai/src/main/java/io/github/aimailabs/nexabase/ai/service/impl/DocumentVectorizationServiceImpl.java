@@ -14,6 +14,8 @@ import io.qdrant.client.grpc.Common.Condition;
 import io.qdrant.client.grpc.Common.FieldCondition;
 import io.qdrant.client.grpc.Common.Filter;
 import io.qdrant.client.grpc.Common.Match;
+import io.qdrant.client.grpc.Collections.Distance;
+import io.qdrant.client.grpc.Collections.VectorParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,8 +83,25 @@ public class DocumentVectorizationServiceImpl implements DocumentVectorizationSe
 
         // 批量 Embedding + 写入
         List<Embedding> embeddings = embeddingModel.embedAll(enriched).content();
+        ensureCollectionExists();
         embeddingStore.addAll(embeddings, enriched);
         log.info("文档 docId={} 向量化完成，共 {} 块", docId, enriched.size());
+    }
+
+    private void ensureCollectionExists() {
+        try {
+            Boolean exists = qdrantClient.collectionExistsAsync(collection).get();
+            if (!Boolean.TRUE.equals(exists)) {
+                VectorParams vectorParams = VectorParams.newBuilder()
+                        .setSize(1024)
+                        .setDistance(Distance.Cosine)
+                        .build();
+                qdrantClient.createCollectionAsync(collection, vectorParams).get();
+                log.info("Qdrant 向量集合 {} 自动创建成功 (1024 维, Cosine 距离)", collection);
+            }
+        } catch (Exception e) {
+            log.warn("检查/自动创建 Qdrant 集合 {} 失败", collection, e);
+        }
     }
 
     @Override
@@ -91,6 +110,11 @@ public class DocumentVectorizationServiceImpl implements DocumentVectorizationSe
             return;
         }
         try {
+            Boolean exists = qdrantClient.collectionExistsAsync(collection).get();
+            if (Boolean.FALSE.equals(exists)) {
+                log.info("Qdrant 集合 {} 尚不存在，跳过删除 docId={}", collection, docId);
+                return;
+            }
             FieldCondition fieldCondition = FieldCondition.newBuilder()
                     .setKey("docId")
                     .setMatch(Match.newBuilder().setKeyword(String.valueOf(docId)).build())
@@ -100,7 +124,26 @@ public class DocumentVectorizationServiceImpl implements DocumentVectorizationSe
             qdrantClient.deleteAsync(collection, filter).get();
             log.info("文档 docId={} 的 Qdrant chunk 已删除", docId);
         } catch (Exception e) {
+            if (isNotFoundException(e)) {
+                log.info("Qdrant 集合 {} 不存在或无对应 chunk，跳过删除 docId={}", collection, docId);
+                return;
+            }
             throw new RuntimeException("删除 Qdrant chunk 失败: docId=" + docId, e);
         }
+    }
+
+    private boolean isNotFoundException(Throwable t) {
+        while (t != null) {
+            if (t instanceof io.grpc.StatusRuntimeException statusEx) {
+                if (statusEx.getStatus().getCode() == io.grpc.Status.Code.NOT_FOUND) {
+                    return true;
+                }
+            }
+            if (t.getMessage() != null && t.getMessage().contains("doesn't exist")) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
     }
 }
