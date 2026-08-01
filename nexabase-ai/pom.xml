@@ -63,34 +63,6 @@
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-qdrant</artifactId>
         </dependency>
-        <!-- 覆盖 qdrant-java client 版本：langchain4j-qdrant 1.9.1 默认依赖 client 1.16.0，
-             与服务端 1.18.x 的 gRPC 协议存在不兼容（ScoredPoint.vectors 解析为空），
-             导致 QdrantEmbeddingStore.search 计算 CosineSimilarity 时 vector a 长度为 0。
-             升级到 1.18.3 与服务端对齐。 -->
-        <dependency>
-            <groupId>io.qdrant</groupId>
-            <artifactId>client</artifactId>
-            <version>1.18.3</version>
-        </dependency>
-        <!-- 统一 gRPC 版本：qdrant client 1.18.3 依赖 grpc 1.82.0，但 langchain4j-qdrant
-             的 dependencyManagement 把 grpc-protobuf 锁在 1.77.0，导致 grpc-api(1.77.0) 与
-             grpc-core(1.82.0) 版本撕裂，运行时 NoClassDefFoundError: io/grpc/InternalFeatureFlags。
-             统一对齐到 1.82.0。 -->
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-protobuf</artifactId>
-            <version>1.82.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-stub</artifactId>
-            <version>1.82.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-netty-shaded</artifactId>
-            <version>1.82.0</version>
-        </dependency>
         <!-- 测试：JUnit 5 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
