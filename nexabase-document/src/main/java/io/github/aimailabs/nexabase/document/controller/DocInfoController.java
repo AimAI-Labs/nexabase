@@ -43,6 +43,23 @@ public class DocInfoController {
     }
 
     /**
+     * 通过上传的文件创建文档（file↔document 联合链路）。
+     * <p>
+     * 前端先调用 file 模块上传文件获取 fileId，
+     * 再调用本接口传入 fileId，系统自动从 file 模块拉取解析后的纯文本内容，
+     * 写入 MongoDB 正文并投递 MQ 事件触发向量化与索引同步。
+     *
+     * @param req 通过文件创建文档请求体（文档元数据 + fileId）
+     * @return 创建成功的文档信息
+     */
+    @Operation(summary = "通过文件创建文档", description = "传入 fileId，自动拉取文件解析内容写入正文并触发向量化")
+    @PostMapping("/from-file")
+    public Result<DocInfo> createFromFile(@RequestBody CreateDocFromFileRequest req) {
+        Long userId = UserContext.getCurrentUserId();
+        return Result.success(docInfoService.createFromFile(req.getDocInfo(), userId != null ? userId : 1L));
+    }
+
+    /**
      * 更新文档内容与元数据，并触发重新向量化。
      *
      * @param id  文档 ID
@@ -102,5 +119,12 @@ public class DocInfoController {
         private DocInfo docInfo;
         @Schema(description = "文档正文内容")
         private String content;
+    }
+
+    @Data
+    @Schema(description = "通过文件创建文档请求体")
+    public static class CreateDocFromFileRequest {
+        @Schema(description = "文档元数据（需包含 kbId / categoryId / title / fileId）", requiredMode = Schema.RequiredMode.REQUIRED)
+        private DocInfo docInfo;
     }
 }

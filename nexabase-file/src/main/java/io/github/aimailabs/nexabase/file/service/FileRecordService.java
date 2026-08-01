@@ -43,4 +43,14 @@ public interface FileRecordService {
      * @param userId 操作人ID
      */
     void deleteFile(Long fileId, Long userId);
+
+    /**
+     * 从对象存储下载文件字节并解析为纯文本。
+     * <p>根据文件 MIME 类型和扩展名自动选择解析器。
+     * 不支持的格式返回空字符串。
+     *
+     * @param fileId 文件ID
+     * @return 解析后的纯文本内容
+     */
+    String parseFileContent(Long fileId);
 }

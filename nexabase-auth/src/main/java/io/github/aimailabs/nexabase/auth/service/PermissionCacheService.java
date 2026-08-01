@@ -183,12 +183,18 @@ public class PermissionCacheService {
      * </ul>
      */
     private Set<String> readSet(String key) {
-        Set<String> members = redis.opsForSet().members(key);
-        if (members == null || members.isEmpty()) {
+        try {
+            Set<String> members = redis.opsForSet().members(key);
+            if (members == null || members.isEmpty()) {
+                return null;
+            }
+            members.remove("__empty__");
+            return members;
+        } catch (org.springframework.data.redis.RedisSystemException e) {
+            // Redis 连接异常（如公网链路抖动、连接被重置）时降级回源 DB，避免登录链路直接 500
+            log.warn("Redis 读取失败，降级回源 DB。key={}, err={}", key, e.getMessage());
             return null;
         }
-        members.remove("__empty__");
-        return members;
     }
 
     /**

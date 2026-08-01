@@ -10,6 +10,7 @@ import io.github.aimailabs.nexabase.document.mapper.DocInfoMapper;
 import io.github.aimailabs.nexabase.document.mapper.DocKnowledgeBaseMapper;
 import io.github.aimailabs.nexabase.document.repository.DocContentRepository;
 import io.github.aimailabs.nexabase.document.service.DocInfoService;
+import io.github.aimailabs.nexabase.file.api.client.FileContentClient;
 import io.github.aimailabs.nexabase.foundation.common.ResultCode;
 import io.github.aimailabs.nexabase.foundation.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class DocInfoServiceImpl implements DocInfoService {
     private final DocContentRepository docContentRepository;
     private final RabbitTemplate rabbitTemplate;
     private final DocKnowledgeBaseMapper docKnowledgeBaseMapper;
+    private final FileContentClient fileContentClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -154,5 +156,34 @@ public class DocInfoServiceImpl implements DocInfoService {
         DocumentChangedEvent event = new DocumentChangedEvent(id, "DELETE", System.currentTimeMillis());
         rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE_DOCUMENT, RabbitMqConfig.ROUTING_KEY_CHANGED, event);
         log.info("文档删除成功，docId={}, 已投递 DELETE 事件", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public DocInfo createFromFile(DocInfo docInfo, Long userId) {
+        // 1. 校验 fileId 必填
+        if (docInfo.getFileId() == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "创建文档（文件来源）需指定 fileId");
+        }
+
+        // 2. 经 Feign 调用 file 模块拉取文件解析后的纯文本
+        String content;
+        try {
+            content = fileContentClient.getFileContent(docInfo.getFileId());
+        } catch (Exception e) {
+            log.error("拉取文件解析内容失败，fileId={}", docInfo.getFileId(), e);
+            throw new BusinessException(ResultCode.REMOTE_CALL_ERROR,
+                    "拉取文件内容失败: " + e.getMessage());
+        }
+        if (content == null || content.isBlank()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST,
+                    "文件内容解析为空，无法创建文档，fileId=" + docInfo.getFileId());
+        }
+
+        // 3. 补全元数据：authorId / createdBy
+        docInfo.setAuthorId(userId);
+
+        // 4. 复用已有的 create 方法（标题唯一校验 + 租户继承 + MongoDB 落库 + MQ 事件投递）
+        return create(docInfo, content);
     }
 }

@@ -49,4 +49,16 @@ public class FileInternalController {
                 .createdBy(record.getCreatedBy())
                 .build();
     }
+
+    /**
+     * 拉取文件解析后的纯文本内容（内部接口）。
+     * <p>供 nexabase-document 调用，将解析后的正文写入 MongoDB。
+     *
+     * @param id 文件 ID
+     * @return 解析后的纯文本内容；不支持的格式返回空字符串
+     */
+    @GetMapping("/content/{id}")
+    public String getFileContent(@PathVariable Long id) {
+        return fileRecordService.parseFileContent(id);
+    }
 }

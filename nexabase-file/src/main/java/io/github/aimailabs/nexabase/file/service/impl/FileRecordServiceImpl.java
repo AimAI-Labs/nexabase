@@ -4,6 +4,8 @@ import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.github.aimailabs.nexabase.file.entity.FileRecord;
 import io.github.aimailabs.nexabase.file.mapper.FileRecordMapper;
+import io.github.aimailabs.nexabase.file.parser.DocumentParser;
+import io.github.aimailabs.nexabase.file.parser.DocumentParserFactory;
 import io.github.aimailabs.nexabase.file.service.FileRecordService;
 import io.github.aimailabs.nexabase.foundation.common.ResultCode;
 import io.github.aimailabs.nexabase.foundation.exception.BusinessException;
@@ -13,9 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.InputStream;
@@ -38,6 +42,7 @@ public class FileRecordServiceImpl implements FileRecordService {
 
     private final FileRecordMapper fileRecordMapper;
     private final S3Client s3Client;
+    private final DocumentParserFactory documentParserFactory;
     private static final String BUCKET_NAME = "nexabase";
 
     /**
@@ -164,5 +169,39 @@ public class FileRecordServiceImpl implements FileRecordService {
         record.setUpdatedBy(userId);
         fileRecordMapper.updateById(record);
         log.info("文件逻辑删除成功, fileId={}, objectPath={}", fileId, record.getObjectPath());
+    }
+
+    /**
+     * 从对象存储下载文件字节并解析为纯文本。
+     * <p>根据文件 MIME 类型和扩展名自动选择解析器。
+     * 不支持的格式返回空字符串。
+     *
+     * @param fileId 文件ID
+     * @return 解析后的纯文本内容
+     */
+    @Override
+    public String parseFileContent(Long fileId) {
+        FileRecord record = fileRecordMapper.selectById(fileId);
+        if (record == null || record.getIsDeleted() == 1) {
+            throw new BusinessException(ResultCode.RESOURCE_NOT_FOUND, "文件不存在或已被删除");
+        }
+        // 从 S3 拉取文件字节流
+        try (ResponseInputStream<GetObjectResponse> response = s3Client.getObject(
+                GetObjectRequest.builder()
+                        .bucket(record.getBucket())
+                        .key(record.getObjectPath())
+                        .build())) {
+            byte[] bytes = response.readAllBytes();
+            DocumentParser parser = documentParserFactory.getParser(record.getContentType(), record.getFileName());
+            String content = parser.parse(bytes, record.getFileName());
+            log.info("文件解析成功, fileId={}, parser={}, contentLen={}",
+                    fileId, parser.getClass().getSimpleName(), content.length());
+            return content;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("文件解析失败, fileId={}", fileId, e);
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "文件解析失败: " + e.getMessage());
+        }
     }
 }

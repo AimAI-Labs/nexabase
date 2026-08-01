@@ -45,6 +45,12 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- Lettuce 连接池依赖（lettuce.pool.enabled=true 时必需） -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+        </dependency>
+
         <!-- AOP（foundation 已 optional 引入，此处显式声明确保切面生效） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
