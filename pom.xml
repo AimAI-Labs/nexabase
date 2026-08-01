@@ -35,7 +35,7 @@
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
         <mybatis-plus.version>3.5.17</mybatis-plus.version>
-        <druid.version>1.2.25</druid.version>
+        <!-- <druid.version>1.2.25</druid.version> -->
         <jjwt.version>0.13.0</jjwt.version>
         <langchain4j.version>1.9.1</langchain4j.version>
         <langchain4j-community.version>1.9.1-beta17</langchain4j-community.version>
@@ -132,12 +132,13 @@
                 <version>${mybatis-plus.version}</version>
             </dependency>
 
-            <!-- Druid -->
+            <!-- Druid 连接池（已换回 HikariCP，保留注释备用）
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>druid-spring-boot-3-starter</artifactId>
                 <version>${druid.version}</version>
             </dependency>
+            -->
 
             <!-- JJWT -->
             <dependency>

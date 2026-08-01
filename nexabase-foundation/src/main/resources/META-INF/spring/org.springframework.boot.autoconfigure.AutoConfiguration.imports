@@ -1,5 +1,5 @@
 io.github.aimailabs.nexabase.foundation.config.ServletWebAutoConfiguration
 io.github.aimailabs.nexabase.foundation.config.ReactiveWebAutoConfiguration
 io.github.aimailabs.nexabase.foundation.config.MqTraceAutoConfiguration
-io.github.aimailabs.nexabase.foundation.config.druid.DruidWebMonitorAutoConfiguration
+# io.github.aimailabs.nexabase.foundation.config.druid.DruidWebMonitorAutoConfiguration
 
