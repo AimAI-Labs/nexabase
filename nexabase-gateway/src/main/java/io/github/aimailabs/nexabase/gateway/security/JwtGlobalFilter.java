@@ -20,6 +20,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 /**
  * 网关 JWT 全局过滤器。
@@ -39,6 +40,14 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String REDIS_VERSION_PREFIX = "auth:jwt:version:";
     private static final String REDIS_BLACKLIST_PREFIX = "auth:jwt:blacklist:";
+
+    /**
+     * Redis 命令单次调用超时上限。
+     * <p>
+     * 独立于 {@code spring.data.redis.timeout} 的全局配置，针对网关鉴权场景收紧到 500ms，
+     * 避免单次 Redis 抖动长时间阻塞请求线程，影响网关吞吐。
+     */
+    private static final Duration REDIS_OP_TIMEOUT = Duration.ofMillis(500);
 
     private final JwtVerifier jwtVerifier;
     private final JwtProperties properties;
@@ -88,15 +97,27 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
         String jti = jwtVerifier.getJti(claims);
 
         // jwt_version 校验
+        // Redis 不可用或超时时降级放行：JWT 验签已通过，version/blacklist 仅用于强制下线场景，
+        // 牺牲该弱安全保证换取网关在 Redis 抖动时的高可用，避免鉴权链路雪崩。
         String versionKey = REDIS_VERSION_PREFIX + userId;
         return redis.opsForValue().get(versionKey)
+                .timeout(REDIS_OP_TIMEOUT)
                 .defaultIfEmpty("")
+                .onErrorResume(ex -> {
+                    log.warn("[{}] Redis jwt_version 校验降级放行: userId={}", userId, ex.getMessage());
+                    return Mono.just("");
+                })
                 .flatMap(cachedVersion -> {
                     if (!cachedVersion.isEmpty() && !cachedVersion.equals(String.valueOf(jwtVersion))) {
                         return unauthorized(exchange, ResultCode.TOKEN_INVALID, "账号已失效，请重新登录");
                     }
                     // 黑名单校验
                     return redis.hasKey(REDIS_BLACKLIST_PREFIX + jti)
+                            .timeout(REDIS_OP_TIMEOUT)
+                            .onErrorResume(ex -> {
+                                log.warn("[{}] Redis 黑名单校验降级放行: jti={}", jti, ex.getMessage());
+                                return Mono.just(Boolean.FALSE);
+                            })
                             .flatMap(blacklisted -> {
                                 if (Boolean.TRUE.equals(blacklisted)) {
                                     return unauthorized(exchange, ResultCode.TOKEN_INVALID, "令牌已注销");

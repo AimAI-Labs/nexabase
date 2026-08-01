@@ -59,6 +59,9 @@ public class NexabaseErrorWebExceptionHandler implements WebExceptionHandler, Or
                 traceId = TraceContext.generateTraceId();
             }
 
+            // 最终 TraceID 副本，供后续 lambda 引用（traceId 经多次回退赋值后非 effectively final）
+            final String finalTraceId = traceId;
+
             // 映射异常到错误码
             ResultCode resultCode = mapException(ex);
             String message = resolveMessage(ex, resultCode);
@@ -76,6 +79,8 @@ public class NexabaseErrorWebExceptionHandler implements WebExceptionHandler, Or
 
             // 设置响应
             exchange.getResponse().setStatusCode(resultCode.getHttpStatus());
+            // 显式设置 Content-Type 并覆盖 Accept 协商，避免客户端 Accept 头不含 application/json
+            // 时抛出 "Could not find acceptable representation" 二次异常。
             exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
             exchange.getResponse().getHeaders().add(TraceConstants.TRACE_ID_HEADER, traceId);
 
@@ -83,10 +88,15 @@ public class NexabaseErrorWebExceptionHandler implements WebExceptionHandler, Or
             try {
                 byte[] bytes = objectMapper.writeValueAsBytes(result);
                 DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
-                return exchange.getResponse().writeWith(Mono.just(buffer));
+                return exchange.getResponse().writeWith(Mono.just(buffer))
+                        // 写入失败（如响应在并发场景下已被提交）时回退为强制完成，避免二次异常
+                        .onErrorResume(writeErr -> {
+                            log.error("[{}] 错误响应写入失败，强制完成: {}", finalTraceId, writeErr.getMessage());
+                            return exchange.getResponse().setComplete();
+                        });
             } catch (JsonProcessingException e) {
-                log.error("[{}] 错误响应序列化失败: {}", traceId, e.getMessage(), e);
-                return Mono.error(e);
+                log.error("[{}] 错误响应序列化失败: {}", finalTraceId, e.getMessage(), e);
+                return exchange.getResponse().setComplete();
             }
         });
     }
@@ -109,6 +119,10 @@ public class NexabaseErrorWebExceptionHandler implements WebExceptionHandler, Or
                 case 504 -> ResultCode.GATEWAY_TIMEOUT;
                 default -> statusCode >= 500 ? ResultCode.INTERNAL_ERROR : ResultCode.BAD_REQUEST;
             };
+        }
+        // 数据访问超时（如 Redis 命令超时）映射为 503，语义更准确
+        if (ex instanceof org.springframework.dao.QueryTimeoutException) {
+            return ResultCode.SERVICE_UNAVAILABLE;
         }
         return ResultCode.INTERNAL_ERROR;
     }
