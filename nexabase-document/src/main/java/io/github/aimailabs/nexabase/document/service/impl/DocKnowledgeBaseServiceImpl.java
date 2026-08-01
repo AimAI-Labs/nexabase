@@ -9,6 +9,8 @@ import io.github.aimailabs.nexabase.foundation.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class DocKnowledgeBaseServiceImpl implements DocKnowledgeBaseService {
@@ -38,6 +40,17 @@ public class DocKnowledgeBaseServiceImpl implements DocKnowledgeBaseService {
             throw new BusinessException(ResultCode.RESOURCE_NOT_FOUND, "知识库不存在或已被删除");
         }
         return kb;
+    }
+
+    @Override
+    public List<DocKnowledgeBase> getByName(String name) {
+        List<DocKnowledgeBase> list = mapper.selectList(new LambdaQueryWrapper<DocKnowledgeBase>()
+                .like(DocKnowledgeBase::getName, name)
+                .eq(DocKnowledgeBase::getIsDeleted, 0));
+        if (list.isEmpty()) {
+            throw new BusinessException(ResultCode.RESOURCE_NOT_FOUND, "未找到名称包含「" + name + "」的知识库");
+        }
+        return list;
     }
 
     @Override

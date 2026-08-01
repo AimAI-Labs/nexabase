@@ -4,6 +4,8 @@ import io.github.aimailabs.nexabase.document.entity.DocKnowledgeBase;
 import io.github.aimailabs.nexabase.document.service.DocKnowledgeBaseService;
 import io.github.aimailabs.nexabase.foundation.common.Result;
 import io.github.aimailabs.nexabase.foundation.security.UserContext;
+
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +39,20 @@ public class DocKnowledgeBaseController {
         Long userId = UserContext.getCurrentUserId();
         kb.setOwnerId(userId != null ? userId : 1L);
         return Result.success(kbService.create(kb));
+    }
+
+    /**
+     * 根据知识库名称模糊查询知识库列表。
+     *
+     * @param name 知识库名称关键字
+     * @return 名称包含该关键字的知识库列表
+     */
+    @Operation(summary = "按名称模糊查询知识库", description = "根据名称关键字模糊匹配知识库列表")
+    @GetMapping
+    public Result<List<DocKnowledgeBase>> getByName(
+            @Parameter(description = "知识库名称关键字", required = true)
+            @RequestParam String name) {
+        return Result.success(kbService.getByName(name));
     }
 
     /**
