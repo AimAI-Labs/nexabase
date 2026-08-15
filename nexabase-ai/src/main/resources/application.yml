@@ -18,3 +18,19 @@ spring:
         namespace: ${NACOS_NAMESPACE:nexabase-dev}
         file-extension: yml
         group: DEFAULT_GROUP
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-field: is_deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Flyway 数据库迁移
+spring.flyway:
+  enabled: true
+  locations: classpath:db/migration
+  baseline-on-migrate: true
