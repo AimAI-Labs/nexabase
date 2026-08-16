@@ -78,6 +78,18 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
         }
         String token = authHeader.substring(BEARER_PREFIX.length());
 
+        // 开发测试 Token 快速通道
+        JwtProperties.DevTokenProperties devToken = properties.getDevToken();
+        if (devToken != null && devToken.isEnabled() && devToken.getToken() != null && devToken.getToken().equals(token)) {
+            log.debug("命中开发测试 Token 快速通道，注入模拟用户: userId={}, username={}",
+                    devToken.getUserId(), devToken.getUsername());
+            ServerHttpRequest mutated = exchange.getRequest().mutate()
+                    .header("X-User-Id", String.valueOf(devToken.getUserId()))
+                    .header("X-User-Name", devToken.getUsername() != null ? devToken.getUsername() : "")
+                    .build();
+            return chain.filter(exchange.mutate().request(mutated).build());
+        }
+
         // 验签
         Claims claims;
         try {

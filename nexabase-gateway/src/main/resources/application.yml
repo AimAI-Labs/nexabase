@@ -52,3 +52,9 @@ nexabase:
       - /v3/api-docs
       - /swagger-ui
       - /swagger-resources
+    # 开发测试 Token 配置（方便本地调试时直接使用固定 Bearer Token 访问接口）
+    dev-token:
+      enabled: ${DEV_TOKEN_ENABLED:true}
+      token: ${DEV_TOKEN:dev-test-token}
+      user-id: 1
+      username: dev-admin

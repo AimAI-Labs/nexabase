@@ -24,4 +24,22 @@ public class JwtProperties {
 
     /** 无需鉴权的白名单路径（前缀匹配） */
     private List<String> whitelistPaths = new ArrayList<>();
+
+    /** 开发测试 Token 配置 */
+    private DevTokenProperties devToken = new DevTokenProperties();
+
+    @Data
+    public static class DevTokenProperties {
+        /** 是否启用开发测试 Token（默认为 false） */
+        private boolean enabled = false;
+
+        /** 开发测试使用的固定 Bearer Token 字符串 */
+        private String token = "dev-test-token";
+
+        /** 模拟注入的用户 ID */
+        private Long userId = 1L;
+
+        /** 模拟注入的用户名 */
+        private String username = "dev-admin";
+    }
 }
